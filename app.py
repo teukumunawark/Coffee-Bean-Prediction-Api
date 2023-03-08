@@ -1,8 +1,10 @@
 import os
 from werkzeug.utils import secure_filename
+from deep_learnig import prediction, multiprediction
+from flask import Flask, request, jsonify
 from backgound_check import backgound_detected
-from deep_learnig import prediction
-from flask import Flask, request
+
+
 
 
 app = Flask(__name__)
@@ -19,7 +21,7 @@ def allowed_file(filename):
            ) in app.config['ALLOWED_EXTENSIONS']
 
 @app.route('/predictions', methods=['POST'])
-def test():
+def single_processing():
     if 'file' not in request.files:
         return {'error': 'No file in request'}, 400
     file = request.files['file']
@@ -46,3 +48,29 @@ def test():
         return {'message': 'process is rejected'}, 204
     else:
         return {}, 404
+
+
+@app.route('/multipredictions', methods=['POST'])
+def multiple_processing():
+    uploaded_files = request.files.getlist('file')
+    filenames = []
+    for file in uploaded_files:
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        filenames.append(file_path)
+        
+    response = multiprediction(filenames)
+    
+    # Remove uploaded files after processing
+    for filename in filenames:
+        print(f"Deleting file: {filename}")
+        if os.path.exists(filename):
+            os.remove(filename)
+        else:
+            print(f"File not found: {filename}")
+    
+    return response
+
+
+    
