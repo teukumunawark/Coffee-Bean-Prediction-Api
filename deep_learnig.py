@@ -30,9 +30,9 @@ idx_to_class = {v: k for k, v in datasets.ImageFolder(
     root=train_dir).class_to_idx.items()}
 
 
-def prediction(test_image_name):
+def prediction(image_name):
     transform = image_transforms
-    test_image = Image.open(test_image_name)
+    test_image = Image.open(image_name)
     test_image_tensor = transform(test_image)
 
     if torch.cuda.is_available():
@@ -70,3 +70,60 @@ def prediction(test_image_name):
 
         # Return JSON response
         return jsonify(response)
+
+
+def multiprediction(image_names):
+    transform = image_transforms
+    responses = []  # list to store responses for each image
+
+    for image_name in image_names:
+        try:
+            test_image = Image.open(image_name)
+        except Exception as e:
+            # if there is an error opening the image, add error message to response
+            response = {
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "predictions": [{"error": str(e)}]
+            }
+            responses.append(response)
+            continue
+
+        test_image_tensor = transform(test_image)
+
+        if torch.cuda.is_available():
+            test_image_tensor = test_image_tensor.view(1, 3, 256, 256).cuda()
+        else:
+            test_image_tensor = test_image_tensor.view(1, 3, 256, 256)
+        with torch.no_grad():
+            # Model outputs log probabilities
+            out = model(test_image_tensor)
+            ps = F.softmax(out.data, dim=1)
+            topk, topclass = ps.topk(4, dim=1)
+
+        # Create dictionary of predictions for this image
+        predictions = []
+        for i in range(4):
+            cls_idx = int(topclass.cpu().numpy()[0][i])
+            cls_name = idx_to_class[topclass.cpu().numpy()[0][i]]
+            score = round_decimals_up(topk.cpu().numpy()[0][i] * 100, 1)
+            probability = round_decimals_up(
+                ps.cpu().numpy()[0][cls_idx] * 100, 1)
+
+            prediction = {
+                "class_name": cls_name,
+                "score": score,
+                "probability": probability
+            }
+
+            predictions.append(prediction)
+
+        # Create dictionary of response for this image
+        response = {
+            "prediction": predictions
+        }
+
+        # Add response for this image to list of responses
+        responses.append(response)
+
+    # Return JSON response containing responses for all images
+    return jsonify(responses)
