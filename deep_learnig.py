@@ -7,9 +7,6 @@ from flask import jsonify
 from round_decimals import round_decimals_up
 from datetime import datetime
 
-
-os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
-
 batch_size = 4
 train_dir = './data/train'
 
@@ -26,11 +23,11 @@ image_transforms = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize(mean, std)
 ])
+
 idx_to_class = {v: k for k, v in datasets.ImageFolder(
     root=train_dir).class_to_idx.items()}
 
-
-def prediction(image_name):
+def single_prediction(image_name):
     transform = image_transforms
     test_image = Image.open(image_name)
     test_image_tensor = transform(test_image)
@@ -39,6 +36,7 @@ def prediction(image_name):
         test_image_tensor = test_image_tensor.view(1, 3, 256, 256).cuda()
     else:
         test_image_tensor = test_image_tensor.view(1, 3, 256, 256)
+        
     with torch.no_grad():
         # Model outputs log probabilities
         out = model(test_image_tensor)
@@ -74,33 +72,27 @@ def prediction(image_name):
 
 def multiprediction(image_names):
     transform = image_transforms
-    responses = []  # list to store responses for each image
-
+    responses = []
     for image_name in image_names:
         try:
             test_image = Image.open(image_name)
         except Exception as e:
-            # if there is an error opening the image, add error message to response
             response = {
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "predictions": [{"error": str(e)}]
             }
             responses.append(response)
             continue
-
         test_image_tensor = transform(test_image)
-
         if torch.cuda.is_available():
             test_image_tensor = test_image_tensor.view(1, 3, 256, 256).cuda()
         else:
             test_image_tensor = test_image_tensor.view(1, 3, 256, 256)
         with torch.no_grad():
-            # Model outputs log probabilities
             out = model(test_image_tensor)
             ps = F.softmax(out.data, dim=1)
             topk, topclass = ps.topk(4, dim=1)
 
-        # Create dictionary of predictions for this image
         predictions = []
         for i in range(4):
             cls_idx = int(topclass.cpu().numpy()[0][i])
@@ -114,16 +106,10 @@ def multiprediction(image_names):
                 "score": score,
                 "probability": probability
             }
-
             predictions.append(prediction)
-
-        # Create dictionary of response for this image
         response = {
             "prediction": predictions
         }
-
-        # Add response for this image to list of responses
         responses.append(response)
-
-    # Return JSON response containing responses for all images
+        
     return jsonify(responses)
