@@ -1,7 +1,7 @@
-# flask
-# -f https://download.pytorch.org/whl/torch_stable.html 
-# torch==1.13.1+cpu 
-# -f https://download.pytorch.org/whl/torch_stable.html
-# torchvision==0.14.1+cpu
-# python-dotenv
-# opencv-python==4.6.0.66
+flask
+-f https://download.pytorch.org/whl/torch_stable.html 
+torch==1.13.1+cpu 
+-f https://download.pytorch.org/whl/torch_stable.html
+torchvision==0.14.1+cpu
+python-dotenv
+opencv-python==4.6.0.66
