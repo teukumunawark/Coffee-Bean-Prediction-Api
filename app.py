@@ -1,6 +1,5 @@
 import os
 from werkzeug.utils import secure_filename
-from camera import gen_frames
 from deep_learnig import single_prediction, multiprediction
 from flask import Flask, request, jsonify, Response
 from backgound_check import single_bg_detected
@@ -81,8 +80,3 @@ def multiple_processing():
             print(f"File not found: {filename}")
 
     return response
-
-
-@app.route('/camera')
-def video_feed():
-    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
