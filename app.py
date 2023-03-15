@@ -1,7 +1,7 @@
 import os
 from werkzeug.utils import secure_filename
 from deep_learnig import single_prediction, multiprediction
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request
 from backgound_check import single_bg_detected
 
 
@@ -80,3 +80,6 @@ def multiple_processing():
             print(f"File not found: {filename}")
 
     return response
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=5000, debug=True)
