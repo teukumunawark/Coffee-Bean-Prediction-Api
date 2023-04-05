@@ -1,9 +1,9 @@
 import os
 from werkzeug.utils import secure_filename
-from deep_learnig import single_prediction, multiprediction
+from deep_learning.single_predict import singleprediction
+from deep_learning.multi_predict import multiprediction
 from flask import Flask, request
 from backgound_check import single_bg_detected
-
 
 
 app = Flask(__name__)
@@ -19,7 +19,6 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower(
            ) in app.config['ALLOWED_EXTENSIONS']
 
-
 @app.route('/singleprediction', methods=['POST'])
 def single_processing():
     if 'file' not in request.files:
@@ -30,17 +29,13 @@ def single_processing():
         return {'error': 'No file selected'}, 400
 
     if file and allowed_file(file.filename):
-
         filename = secure_filename(file.filename)
-
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-
         detected_respone = single_bg_detected('./uploads/' + filename)
 
         if detected_respone != False:
-            prediction_response = single_prediction('./uploads/' + filename)
+            prediction_response = singleprediction('./uploads/' + filename)
             os.remove('./uploads/' + filename)
-
             return prediction_response, 200
 
         os.remove('./uploads/' + filename)
@@ -71,7 +66,6 @@ def multiple_processing():
 
     response = multiprediction(filenames)
 
-    # Remove uploaded files after processing
     for filename in filenames:
         print(f"Deleting file: {filename}")
         if os.path.exists(filename):
