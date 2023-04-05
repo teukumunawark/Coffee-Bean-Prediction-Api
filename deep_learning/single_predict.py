@@ -2,10 +2,10 @@ import torch
 from PIL import Image
 import torch.nn.functional as F
 from flask import jsonify
-from round_decimals import round_decimals_up
+from utils.round_decimals import round_decimals_up
 from datetime import datetime
 
-import constants
+import utils.constants as constants
 
 def singleprediction(image_name):
     with Image.open(image_name) as img:

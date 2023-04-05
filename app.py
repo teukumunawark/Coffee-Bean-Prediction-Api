@@ -3,7 +3,7 @@ from werkzeug.utils import secure_filename
 from deep_learning.single_predict import singleprediction
 from deep_learning.multi_predict import multiprediction
 from flask import Flask, request
-from backgound_check import single_bg_detected
+from utils.backgound_check import single_bg_detected
 
 
 app = Flask(__name__)

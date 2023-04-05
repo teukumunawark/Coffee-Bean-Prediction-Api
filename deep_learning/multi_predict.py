@@ -4,9 +4,9 @@ from PIL import Image
 from flask import jsonify
 from datetime import datetime
 import torch.nn.functional as F
-from round_decimals import round_decimals_up
+from utils.round_decimals import round_decimals_up
 
-import constants
+import utils.constants as constants
 
 
 def predict_image(image_path, transform, model):
