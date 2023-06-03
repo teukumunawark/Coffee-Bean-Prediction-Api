@@ -2,7 +2,7 @@ import torch
 from torchvision import datasets, transforms
 
 batch_size = 4
-train_dir = './data/train'
+train_dir = './data/classes'
 
 mean = [0.7980, 0.7820, 0.7562]
 std = [0.1441, 0.1729, 0.2341]
