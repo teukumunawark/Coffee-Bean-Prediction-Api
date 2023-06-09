@@ -22,7 +22,6 @@ def imageclassification(image_path, transform, model):
         test_image_tensor = test_image_tensor.view(1, 3, 256, 256)
 
     with torch.no_grad():
-        test_image_tensor = test_image_tensor.view(1, 3, 256, 256)
         out = model(test_image_tensor)
         ps = F.softmax(out.data, dim=1)
         topk, topclass = ps.topk(4, dim=1)
