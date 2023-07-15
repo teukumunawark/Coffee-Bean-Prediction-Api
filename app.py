@@ -1,10 +1,10 @@
 import os
 from werkzeug.utils import secure_filename
-from deep_learning.single_classification import singleclassification, highestscore
-from deep_learning.multi_classification import multiclassification
-from flask import Flask, request
-from utils.backgound_check import single_bg_detected
+# from deep_learning.single_classification import singleclassification, highestscore
+from deep_learning.multi_classification import classify_multiple_images
+# from utils.backgound_check import single_bg_detected
 
+from flask import Flask, request
 
 app = Flask(__name__)
 
@@ -33,62 +33,71 @@ def check_file(file):
     return file
 
 
-@app.route('/singleclassification', methods=['POST'])
-def single_processing():
-    file = request.files['image']
-    file = check_file(file)
+# @app.route('/singleclassification', methods=['POST'])
+# def single_processing():
+#     file = request.files['image']
+#     file = check_file(file)
 
-    filename = secure_filename(file.filename)
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    file.save(file_path)
+#     filename = secure_filename(file.filename)
+#     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+#     file.save(file_path)
 
-    detected_respone = single_bg_detected(file_path)
+#     detected_respone = single_bg_detected(file_path)
 
-    if detected_respone != False:
-        prediction_response = singleclassification(file_path)
-        os.remove(file_path)
-        return prediction_response, 200
+#     if detected_respone != False:
+#         prediction_response = singleclassification(file_path)
+#         os.remove(file_path)
+#         return prediction_response, 200
 
-    os.remove(file_path)
+#     os.remove(file_path)
 
-    return {'message': 'process is rejected'}, 204
+#     return {'message': 'process is rejected'}, 204
 
 
-@app.route('/highestscore', methods=['POST'])
-def highest_score():
-    file = request.files['image']
-    file = check_file(file)
+# @app.route('/highestscore', methods=['POST'])
+# def highest_score():
+#     file = request.files['image']
+#     file = check_file(file)
 
-    filename = secure_filename(file.filename)
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    file.save(file_path)
+#     filename = secure_filename(file.filename)
+#     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+#     file.save(file_path)
 
-    prediction_response = highestscore(file_path)
-    os.remove(file_path)
-    return prediction_response, 200
+#     prediction_response = highestscore(file_path)
+#     os.remove(file_path)
+#     return prediction_response, 200
 
 
 @app.route('/multiclassifications', methods=['POST'])
 def multiple_processing():
+    """Handle multiple image uploads and classifications.
+
+    Parameters:
+        image (FileStorage): A list of image files uploaded by the user.
+
+    Returns:
+        dict: A JSON response with the classification results or an error message.
+    """
     uploaded_files = request.files.getlist('image')
 
     if not uploaded_files:
         return {'error': 'No files uploaded'}, 400
 
-    filenames = []
-    for file in uploaded_files:
-        file = check_file(file)
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
-        filenames.append(file_path)
+    image_paths = []
+    for image_file in uploaded_files:
+        image_file = check_file(image_file)
+        image_name = secure_filename(image_file.filename)
+        image_path = f"{app.config['UPLOAD_FOLDER']}/{image_name}"
+        with open(image_path, 'wb') as f:
+            f.write(image_file.read())
+        image_paths.append(image_path)
 
-    response = multiclassification(filenames)
+    response = classify_multiple_images(image_paths)
 
-    for filename in filenames:
+    for image_path in image_paths:
         try:
-            os.remove(filename)
+            os.remove(image_path)
         except FileNotFoundError:
-            print(f"File not found: {filename}")
+            print(f"File not found: {image_path}")
 
     return response
