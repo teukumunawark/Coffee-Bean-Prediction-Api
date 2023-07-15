@@ -1,9 +1,6 @@
 import os
 from werkzeug.utils import secure_filename
-# from deep_learning.single_classification import singleclassification, highestscore
 from deep_learning.multi_classification import classify_multiple_images
-# from utils.backgound_check import single_bg_detected
-
 from flask import Flask, request
 
 app = Flask(__name__)
@@ -33,51 +30,10 @@ def check_file(file):
     return file
 
 
-# @app.route('/singleclassification', methods=['POST'])
-# def single_processing():
-#     file = request.files['image']
-#     file = check_file(file)
-
-#     filename = secure_filename(file.filename)
-#     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-#     file.save(file_path)
-
-#     detected_respone = single_bg_detected(file_path)
-
-#     if detected_respone != False:
-#         prediction_response = singleclassification(file_path)
-#         os.remove(file_path)
-#         return prediction_response, 200
-
-#     os.remove(file_path)
-
-#     return {'message': 'process is rejected'}, 204
-
-
-# @app.route('/highestscore', methods=['POST'])
-# def highest_score():
-#     file = request.files['image']
-#     file = check_file(file)
-
-#     filename = secure_filename(file.filename)
-#     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-#     file.save(file_path)
-
-#     prediction_response = highestscore(file_path)
-#     os.remove(file_path)
-#     return prediction_response, 200
-
 
 @app.route('/multiclassifications', methods=['POST'])
 def multiple_processing():
-    """Handle multiple image uploads and classifications.
-
-    Parameters:
-        image (FileStorage): A list of image files uploaded by the user.
-
-    Returns:
-        dict: A JSON response with the classification results or an error message.
-    """
+ 
     uploaded_files = request.files.getlist('image')
 
     if not uploaded_files:
@@ -101,3 +57,7 @@ def multiple_processing():
             print(f"File not found: {image_path}")
 
     return response
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=os.getenv('PORT'))
