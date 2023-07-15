@@ -1,15 +1,24 @@
 from typing import List
 import base64
-from io import BytesIO
 import torch
 from PIL import Image
+from io import BytesIO
 import torch.nn.functional as F
 from utils.round_decimals import round_decimals_up
-
 import utils.constants as constants
 
 
-def imageclassification(image_path, transform, model):
+def classify_image(image_path: str, transform: torch.Tensor, model: torch.nn.Module) -> dict:
+    """Classify an image using a PyTorch model.
+
+    Parameters:
+        image_path (str): The path of the image file to be classified.
+        transform (torch.Tensor): The transformation to be applied to the image.
+        model (torch.nn.Module): The PyTorch model to be used for classification.
+
+    Returns:
+        dict: A JSON object with the classification results or an error message.
+    """
     try:
         test_image = Image.open(image_path)
     except Exception as e:
@@ -27,7 +36,7 @@ def imageclassification(image_path, transform, model):
         topk, topclass = ps.topk(4, dim=1)
 
     classifications = [{
-        "name": constants.idx_to_class[topclass.cpu().numpy()[0][i]],
+        "name": f"{constants.idx_to_class[topclass.cpu().numpy()[0][i]]}",
         "score": round_decimals_up(topk.cpu().numpy()[0][i] * 100, 1)
     } for i in range(4)]
 
@@ -41,11 +50,22 @@ def imageclassification(image_path, transform, model):
     }
 
 
-def multiclassification(image_paths: List[str]) -> List[dict]:
+def classify_multiple_images(image_paths: List[str]) -> List[dict]:
+    """Classify multiple images using a PyTorch model.
+
+    Parameters:
+        image_paths (List[str]): A list of paths of the image files to be classified.
+
+    Returns:
+        List[dict]: A list of JSON objects with the classification results or error messages.
+    """
     classifications = []
     for image_path in image_paths:
-        c = imageclassification(
-            image_path, constants.image_transforms, constants.model)
+        c = classify_image(
+            image_path,
+            constants.image_transforms,
+            constants.model,
+        )
         classification = {
             "result": [c] if "error" in c else c["result"],
             "image": c["image"] if "image" in c else None
@@ -53,7 +73,7 @@ def multiclassification(image_paths: List[str]) -> List[dict]:
         classifications.append(classification)
 
     with torch.no_grad():
-        classifications.sort(
-            key=lambda x: x["result"][0]["score"], reverse=True)
+        classifications = sorted(
+            classifications, key=lambda x: x["result"][0]["score"], reverse=True)
 
     return classifications
