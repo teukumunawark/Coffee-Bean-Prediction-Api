@@ -4,40 +4,34 @@ import torch
 from PIL import Image
 from io import BytesIO
 import torch.nn.functional as F
-from utils.round_decimals import round_decimals_up
 import utils.constants as constants
 
 
 def classify_image(image_path: str, transform: torch.Tensor, model: torch.nn.Module) -> dict:
-    """Classify an image using a PyTorch model.
-
-    Parameters:
-        image_path (str): The path of the image file to be classified.
-        transform (torch.Tensor): The transformation to be applied to the image.
-        model (torch.nn.Module): The PyTorch model to be used for classification.
-
-    Returns:
-        dict: A JSON object with the classification results or an error message.
-    """
     try:
         test_image = Image.open(image_path)
     except Exception as e:
         return {"error": str(e)}
 
     test_image_tensor = transform(test_image)
+    
     if torch.cuda.is_available():
         test_image_tensor = test_image_tensor.view(1, 3, 256, 256).cuda()
     else:
         test_image_tensor = test_image_tensor.view(1, 3, 256, 256)
 
     with torch.no_grad():
+        model.eval()
         out = model(test_image_tensor)
         ps = F.softmax(out.data, dim=1)
         topk, topclass = ps.topk(4, dim=1)
-
+        
+    for i in range(4):
+        print(constants.idx_to_class[topclass.cpu().numpy()[0][i]])
+    
     classifications = [{
         "name": f"{constants.idx_to_class[topclass.cpu().numpy()[0][i]]}",
-        "score": round_decimals_up(topk.cpu().numpy()[0][i] * 100, 1)
+        "score": round(topk.cpu().numpy()[0][i] * 100, 1),
     } for i in range(4)]
 
     buffered = BytesIO()
@@ -51,14 +45,6 @@ def classify_image(image_path: str, transform: torch.Tensor, model: torch.nn.Mod
 
 
 def classify_multiple_images(image_paths: List[str]) -> List[dict]:
-    """Classify multiple images using a PyTorch model.
-
-    Parameters:
-        image_paths (List[str]): A list of paths of the image files to be classified.
-
-    Returns:
-        List[dict]: A list of JSON objects with the classification results or error messages.
-    """
     classifications = []
     for image_path in image_paths:
         c = classify_image(

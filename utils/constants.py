@@ -9,7 +9,6 @@ std = [0.1441, 0.1729, 0.2341]
 
 # Load the model from file
 model = torch.load('./models/model.pth')
-model.eval()
 
 if torch.cuda.is_available():
     model.cuda()
