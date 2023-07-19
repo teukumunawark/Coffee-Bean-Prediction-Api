@@ -21,13 +21,9 @@ def classify_image(image_path: str, transform: torch.Tensor, model: torch.nn.Mod
         test_image_tensor = test_image_tensor.view(1, 3, 256, 256)
 
     with torch.no_grad():
-        model.eval()
         out = model(test_image_tensor)
         ps = F.softmax(out.data, dim=1)
         topk, topclass = ps.topk(4, dim=1)
-        
-    for i in range(4):
-        print(constants.idx_to_class[topclass.cpu().numpy()[0][i]])
     
     classifications = [{
         "name": f"{constants.idx_to_class[topclass.cpu().numpy()[0][i]]}",
