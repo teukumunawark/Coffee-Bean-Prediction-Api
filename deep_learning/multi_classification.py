@@ -53,9 +53,10 @@ def classify_multiple_images(image_paths: List[str]) -> List[dict]:
             "image": c["image"] if "image" in c else None
         }
         classifications.append(classification)
-
+        
     with torch.no_grad():
         classifications = sorted(
             classifications, key=lambda x: x["result"][0]["score"], reverse=True)
+        
 
     return classifications
